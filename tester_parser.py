@@ -9,9 +9,15 @@ def check_for_upgrades() -> bool:
 
     if manager_status != "All packages are up to date.":
         print(f"There are {manager_status.split()[0]} packages to upgrade")
+        what_exactly = sub.run(
+            ["sudo", "apt", "list", "--upgradable"], capture_output=True, text=True
+        ).stdout
+        print(what_exactly)
 
 
-# added some stuff to check hooks
+def parse_package_list(packlist: str):
+    pass  # make parsing logic here
+
 
 while True:
     choice = input(f'Hi, {os.getenv("USER")}! Want to check for any updates?\nY/N:')
