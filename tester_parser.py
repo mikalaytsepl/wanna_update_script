@@ -1,5 +1,6 @@
 import os
 import subprocess as sub
+import re
 
 
 def check_for_upgrades() -> bool:
@@ -9,14 +10,26 @@ def check_for_upgrades() -> bool:
 
     if manager_status != "All packages are up to date.":
         print(f"There are {manager_status.split()[0]} packages to upgrade")
-        what_exactly = sub.run(
-            ["sudo", "apt", "list", "--upgradable"], capture_output=True, text=True
-        ).stdout
-        print(what_exactly)
+        return True
+    else:
+        return False
 
 
-def parse_package_list(packlist: str):
-    pass  # make parsing logic here
+def parse_package_list() -> list[dict]:
+    upgd_list = sub.run(
+        ["sudo", "apt", "list", "--upgradable"], capture_output=True, text=True
+    ).stdout
+    splitted_upgd_list = upgd_list.splitlines()[1:]
+    package_information = [
+        {
+            "name": re.search(r"^.+(?=\/)", line).group(),
+            "to_version": versions[0] if len(versions) > 0 else None,
+            "from_version": versions[1] if len(versions) > 1 else None,
+        }
+        for line in splitted_upgd_list
+        for versions in [re.findall(r"(?:[0-9]+\.){2}[0-9]+", line)]
+    ]
+    return package_information
 
 
 while True:
@@ -24,7 +37,8 @@ while True:
     match choice:
         case "Y" | "y":
             print("Updating packages information...")
-            check_for_upgrades()
+            if check_for_upgrades():
+                parse_package_list()
             break
         case "N" | "n":
             print("Update proposition declined.")
